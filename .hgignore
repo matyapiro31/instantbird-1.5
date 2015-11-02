@@ -1,0 +1,17 @@
+syntax:glob
+purple/cache
+purple/extract
+purple/po/POTFILES.in
+tools/l10n/result*
+tools/l10n/po*
+tools/l10n/polib.pyc
+*~
+*.rej
+*.orig
+*.patch
+*.diff
+*.pyc
+configure
+attachment.cgi\?id=*
+mozconfig-*
+.mozconfig*

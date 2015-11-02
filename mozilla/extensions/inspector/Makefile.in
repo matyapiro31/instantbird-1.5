@@ -1,0 +1,36 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+
+DEPTH = ../..
+topsrcdir = @top_srcdir@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include $(DEPTH)/config/autoconf.mk
+
+DOMi_VERSION = 2.0.15pre
+
+XPI_NAME               = inspector
+USE_EXTENSION_MANIFEST = 1
+NO_JAR_AUTO_REG        = 1
+INSTALL_EXTENSION_ID   = inspector@mozilla.org
+XPI_PKGNAME            = inspector-$(DOMi_VERSION)
+
+PREF_JS_EXPORTS = $(srcdir)/resources/content/prefs/inspector.js
+
+DIST_FILES = install.rdf
+
+XULAPP_DEFINES = \
+  -DDOMi_VERSION=$(DOMi_VERSION) \
+  $(NULL)
+
+include $(topsrcdir)/config/rules.mk
+
+export::
+	$(NSINSTALL) -D $(FINAL_TARGET)/chrome/icons/default
+	$(INSTALL) $(srcdir)/resources/content/res/Linux/winInspectorMain.xpm $(FINAL_TARGET)/chrome/icons/default
+	$(INSTALL) $(srcdir)/resources/content/res/Linux/winInspectorMain16.xpm $(FINAL_TARGET)/chrome/icons/default
+	$(INSTALL) $(srcdir)/resources/content/res/WINNT/winInspectorMain.ico $(FINAL_TARGET)/chrome/icons/default

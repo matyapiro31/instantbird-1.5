@@ -1,0 +1,38 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/*
+ * This is a proxy for libpurple PurpleProxy
+ */
+
+[ptr] native purpleNativeProxyInfo(PurpleProxyInfo);
+
+[scriptable, uuid(8af1bbda-6ad5-4920-9173-8a0c99956fef)]
+interface purpleIProxyInfo: nsISupports {
+  const short useGlobal   = -1;
+  const short noProxy     = 0;
+  const short httpProxy   = 1;
+  const short socks4Proxy = 2;
+  const short socks5Proxy = 3;
+  const short useEnvVar   = 4;
+
+  attribute short type;
+
+  // Get the key that can be save in the preferences
+  readonly attribute ACString key;
+
+  // Get the settings of this proxy in the format the libpurple uses
+  [noscript]purpleNativeProxyInfo getPurpleProxy();
+};
+
+
+[scriptable, uuid(6b7f5da3-3150-4a59-bb4d-fde5f22efd5f)]
+interface purpleIProxy: purpleIProxyInfo {
+  readonly attribute AUTF8String host;
+  readonly attribute unsigned long port;
+  readonly attribute AUTF8String username;
+  attribute AUTF8String password;
+};

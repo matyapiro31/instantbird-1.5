@@ -1,0 +1,2 @@
+content screenshot screenshot/ xpcnativewrappers=yes
+override chrome://instantbird/content/blist.xul chrome://screenshot/content/preview.xul

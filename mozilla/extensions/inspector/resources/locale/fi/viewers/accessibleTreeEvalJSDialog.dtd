@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+  <!ENTITY evaluateDialog.title "Suorita JavaScript -dialogi">
+
+  <!ENTITY btnEvaluateJS.label "Suorita">
+  <!ENTITY btnEvaluateJS.accesskey "S">
+  
+  <!ENTITY txtInputArea.label "Syötealue (käytä 'accessible'-muuttujaa valitun accessible'n käyttämiseen ja 'output'-funktiota 'Tulostealue'-ikkunaan kirjoittamiseen): ">
+  <!ENTITY txtInputArea.accesskey "y">
+  <!ENTITY txtOutputArea.label "Tulostealue: ">
+  <!ENTITY txtOutputArea.accesskey "T">

@@ -1,0 +1,48 @@
+diff --git a/netwerk/cookie/nsCookieService.cpp b/netwerk/cookie/nsCookieService.cpp
+--- a/netwerk/cookie/nsCookieService.cpp
++++ b/netwerk/cookie/nsCookieService.cpp
+@@ -812,18 +812,18 @@ nsCookieService::TryInitDB(bool aRecreat
+   }
+ 
+   // Set up our listeners.
+   mDefaultDBState->insertListener = new InsertCookieDBListener(mDefaultDBState);
+   mDefaultDBState->updateListener = new UpdateCookieDBListener(mDefaultDBState);
+   mDefaultDBState->removeListener = new RemoveCookieDBListener(mDefaultDBState);
+   mDefaultDBState->closeListener = new CloseCookieDBListener(mDefaultDBState);
+ 
+-  // Grow cookie db in 512KB increments
+-  mDefaultDBState->dbConn->SetGrowthIncrement(512 * 1024, EmptyCString());
++  // Grow cookie db in 32KB increments
++  mDefaultDBState->dbConn->SetGrowthIncrement(32 * 1024, EmptyCString());
+ 
+   bool tableExists = false;
+   mDefaultDBState->dbConn->TableExists(NS_LITERAL_CSTRING("moz_cookies"),
+     &tableExists);
+   if (!tableExists) {
+     rv = CreateTable();
+     NS_ENSURE_SUCCESS(rv, RESULT_RETRY);
+ 
+diff --git a/toolkit/components/places/Database.cpp b/toolkit/components/places/Database.cpp
+--- a/toolkit/components/places/Database.cpp
++++ b/toolkit/components/places/Database.cpp
+@@ -586,18 +586,18 @@ Database::InitSchema(bool* aDatabaseMigr
+   // mobile devices, limit its size.
+   // Since exceeding the limit will cause a truncate, allow a slightly
+   // larger limit than DATABASE_MAX_WAL_SIZE_IN_KIBIBYTES to reduce the number
+   // of times it is needed.
+   nsAutoCString journalSizePragma("PRAGMA journal_size_limit = ");
+   journalSizePragma.AppendInt(DATABASE_MAX_WAL_SIZE_IN_KIBIBYTES * 3);
+   (void)mMainConn->ExecuteSimpleSQL(journalSizePragma);
+ 
+-  // Grow places in 10MiB increments to limit fragmentation on disk.
+-  (void)mMainConn->SetGrowthIncrement(10 * BYTES_PER_MEBIBYTE, EmptyCString());
++  // Grow places in 64KiB increments to limit disk use.
++  (void)mMainConn->SetGrowthIncrement(64 * 1024, EmptyCString());
+ 
+   // We use our functions during migration, so initialize them now.
+   rv = InitFunctions();
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   // Get the database schema version.
+   int32_t currentSchemaVersion;
+   rv = mMainConn->GetSchemaVersion(&currentSchemaVersion);

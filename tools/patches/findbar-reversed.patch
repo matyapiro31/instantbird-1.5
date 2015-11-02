@@ -1,0 +1,180 @@
+diff --git a/toolkit/components/typeaheadfind/nsITypeAheadFind.idl b/toolkit/components/typeaheadfind/nsITypeAheadFind.idl
+--- a/toolkit/components/typeaheadfind/nsITypeAheadFind.idl
++++ b/toolkit/components/typeaheadfind/nsITypeAheadFind.idl
+@@ -27,20 +27,21 @@ interface nsITypeAheadFind : nsISupports
+    * required. */
+   void init(in nsIDocShell aDocShell);
+ 
+ 
+   /***************************** Core functions ****************************/
+ 
+   /* Find aSearchString in page.  If aLinksOnly is true, only search the page's
+    * hyperlinks for the string. */
+-  unsigned short find(in AString aSearchString, in boolean aLinksOnly);
++  unsigned short find(in AString aSearchString, in boolean aLinksOnly,
++                      [optional] in boolean aFindBackwards);
+ 
+   /* Find another match in the page. */
+-  unsigned short findAgain(in boolean findBackwards, in boolean aLinksOnly);
++  unsigned short findAgain(in boolean aFindBackwards, in boolean aLinksOnly);
+ 
+ 
+   /**************************** Helper functions ***************************/
+ 
+   /* Change searched docShell.  This happens when e.g. we use the same
+    * nsITypeAheadFind object to search different tabs. */
+   void setDocShell(in nsIDocShell aDocShell);
+ 
+diff --git a/toolkit/components/typeaheadfind/nsTypeAheadFind.cpp b/toolkit/components/typeaheadfind/nsTypeAheadFind.cpp
+--- a/toolkit/components/typeaheadfind/nsTypeAheadFind.cpp
++++ b/toolkit/components/typeaheadfind/nsTypeAheadFind.cpp
+@@ -909,17 +909,17 @@ nsTypeAheadFind::FindAgain(bool aFindBac
+     // ScrollSelectionIntoView.
+     FindItNow(nullptr, aLinksOnly, false, aFindBackwards, aResult);
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsTypeAheadFind::Find(const nsAString& aSearchString, bool aLinksOnly,
+-                      uint16_t* aResult)
++                      bool aFindBackwards, uint16_t* aResult)
+ {
+   *aResult = FIND_NOTFOUND;
+ 
+   nsCOMPtr<nsIPresShell> presShell (GetPresShell());
+   if (!presShell) {    
+     nsCOMPtr<nsIDocShell> ds (do_QueryReferent(mDocShell));
+     NS_ENSURE_TRUE(ds, NS_ERROR_FAILURE);
+ 
+@@ -933,20 +933,19 @@ nsTypeAheadFind::Find(const nsAString& a
+     GetSelection(presShell, getter_AddRefs(selectionController),
+                  getter_AddRefs(selection)); // cache for reuse
+     mSelectionController = do_GetWeakReference(selectionController);
+   } else {
+     selectionController->GetSelection(
+       nsISelectionController::SELECTION_NORMAL, getter_AddRefs(selection));
+   }
+ 
+-  if (selection)
+-    selection->CollapseToStart();
+-
+   if (aSearchString.IsEmpty()) {
++    if (selection)
++      selection->CollapseToStart();
+     mTypeAheadBuffer.Truncate();
+ 
+     // These will be initialized to their true values after the first character
+     // is typed
+     mStartFindRange = nullptr;
+     mSelectionController = nullptr;
+ 
+     *aResult = FIND_FOUND;
+@@ -964,16 +963,38 @@ nsTypeAheadFind::Find(const nsAString& a
+     const nsAString& oldStr2 = Substring(mTypeAheadBuffer, 0, aSearchString.Length());
+     if (oldStr2.Equals(newStr2))
+       atEnd = true;
+     
+     if (!atEnd)
+       mStartFindRange = nullptr;
+   }
+ 
++  if (selection && atEnd) {
++    PRInt32 lengthDifference = aSearchString.Length() - mTypeAheadBuffer.Length();
++    if (lengthDifference == 1 || lengthDifference == -1) {
++      selectionController->CharacterMove(lengthDifference == 1, PR_TRUE);
++      nsString newSelection;
++      selection->ToString(newSelection);
++      if (newSelection.Equals(aSearchString)) {
++        mTypeAheadBuffer = aSearchString;
++
++        *aResult = FIND_FOUND;
++        return NS_OK;
++      }
++    }
++  }
++
++  if (selection) {
++    if (aFindBackwards)
++      selection->CollapseToEnd();
++    else
++      selection->CollapseToStart();
++  }
++
+   if (!mIsSoundInitialized && !mNotFoundSoundURL.IsEmpty()) {
+     // This makes sure system sound library is loaded so that
+     // there's no lag before the first sound is played
+     // by waiting for the first keystroke, we still get the startup time benefits.
+     mIsSoundInitialized = true;
+     mSoundInterface = do_CreateInstance("@mozilla.org/sound;1");
+     if (mSoundInterface && !mNotFoundSoundURL.Equals(NS_LITERAL_CSTRING("beep"))) {
+       mSoundInterface->Init();
+@@ -1035,17 +1056,17 @@ nsTypeAheadFind::Find(const nsAString& a
+       }
+     }
+   }
+ 
+   // ----------- Find the text! ---------------------
+   // Beware! This may flush notifications via synchronous
+   // ScrollSelectionIntoView.
+   nsresult rv = FindItNow(nullptr, aLinksOnly, isFirstVisiblePreferred,
+-                          false, aResult);
++                          aFindBackwards, aResult);
+ 
+   // ---------Handle success or failure ---------------
+   if (NS_SUCCEEDED(rv)) {
+     if (mTypeAheadBuffer.Length() == 1) {
+       // If first letter, store where the first find succeeded
+       // (mStartFindRange)
+ 
+       mStartFindRange = nullptr;
+diff --git a/toolkit/content/widgets/findbar.xml b/toolkit/content/widgets/findbar.xml
+--- a/toolkit/content/widgets/findbar.xml
++++ b/toolkit/content/widgets/findbar.xml
+@@ -306,16 +306,26 @@
+             this._browser.addEventListener("keypress", this, false);
+             this._browser.addEventListener("mouseup", this, false);
+             this._findField.value = this._browser.fastFind.searchString;
+           }
+           return val;
+         ]]></setter>
+       </property>
+ 
++      <property name="reversed">
++        <getter><![CDATA[
++          return this.getAttribute("reversed") == "true";
++        ]]></getter>
++        <setter><![CDATA[
++          this.setAttribute("reversed", val);
++          return val;
++        ]]></setter>
++      </property>
++
+       <field name="_observer"><![CDATA[({
+         _self: this,
+ 
+         QueryInterface: function(aIID) {
+           if (aIID.equals(Components.interfaces.nsIObserver) ||
+               aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+               aIID.equals(Components.interfaces.nsISupports))
+             return this;
+@@ -1578,17 +1588,18 @@
+           {
+             this._enableFindButtons(val);
+             if (this.getElement("highlight").checked)
+               this._setHighlightTimeout();
+ 
+             this._updateCaseSensitivity(val);
+ 
+             var fastFind = this.browser.fastFind;
+-            res = fastFind.find(val, this._findMode == this.FIND_LINKS);
++            res = fastFind.find(val, this._findMode == this.FIND_LINKS,
++                                this.reversed);
+ 
+             this._updateFoundLink(res);
+             this._updateStatusUI(res, false);
+ 
+             if (res == this.nsITypeAheadFind.FIND_NOTFOUND)
+               this._findFailedString = val;
+             else
+               this._findFailedString = null;

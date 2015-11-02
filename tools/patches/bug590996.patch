@@ -1,0 +1,30 @@
+diff --git a/js/src/ctypes/libffi/ltmain.sh b/js/src/ctypes/libffi/ltmain.sh
+--- a/js/src/ctypes/libffi/ltmain.sh
++++ b/js/src/ctypes/libffi/ltmain.sh
+@@ -4469,16 +4469,26 @@ func_mode_link ()
+ 	no/*-*-irix* | /*-*-irix*)
+ 	  func_append compile_command " $arg"
+ 	  func_append finalize_command " $arg"
+ 	  ;;
+ 	esac
+ 	continue
+ 	;;
+ 
++  # Avoid matching MSVC linker option.
++      -LARGEADDRESSAWARE)
++        continue
++        ;;
++
++  # Avoid matching MSVC linker option.
++      -LTCG)
++        continue
++        ;;
++
+       -L*)
+ 	func_stripname '-L' '' "$arg"
+ 	dir=$func_stripname_result
+ 	if test -z "$dir"; then
+ 	  if test "$#" -gt 0; then
+ 	    func_fatal_error "require no space between \`-L' and \`$1'"
+ 	  else
+ 	    func_fatal_error "need path for \`-L' option"

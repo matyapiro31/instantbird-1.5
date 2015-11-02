@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+  <!ENTITY cmdShowFindDialog.label "Εύρεση Nodes...">
+  <!ENTITY cmdShowFindDialog.accesskey "ρ">
+  <!ENTITY cmdShowFindDialog.accelkey "ρ">
+
+  <!ENTITY cmdFindNext.label "Εύρεση επομένου">
+  <!ENTITY cmdFindNext.accesskey "ν">
+
+  <!ENTITY cmdToggleAnonContent.label "Προβολή ανώνυμου περιεχομένου">
+  <!ENTITY cmdToggleAnonContent.accesskey "α">
+
+  <!ENTITY cmdToggleWhitespaceNodes.label "Προβολή Whitespace Nodes">
+  <!ENTITY cmdToggleWhitespaceNodes.accesskey "W">
+
+  <!ENTITY cmdToggleAccessibleNodes.label "Show Accessible Nodes">
+  <!ENTITY cmdToggleAccessibleNodes.accesskey "c">
+
+  <!ENTITY cmdFlashSelected.label "Αναβόσβημα επιλεγμένου στοιχείου">
+
+  <!ENTITY cmdToggleAttributes.label "Προβολή γνωρισμάτων">
+  <!ENTITY cmdToggleAttributes.accesskey "γ">
+
+  <!ENTITY cmdSelectByClick.label "Επιλογή στοιχείου με κλικ">
+  <!ENTITY cmdSelectByClick.accesskey "λ">
+
+  <!ENTITY ColumnsDialog.title "Στήλες">
+
+  <!ENTITY cmdShowColumnsDialog.label "Στήλες...">
+  <!ENTITY cmdShowColumnsDialog.accesskey "τ">
+  
+  <!ENTITY cmdInsertNode.label "Εισαγωγή...">
+  <!ENTITY cmdDeleteNode.label "Διαγραφή">
+  <!ENTITY cmdCopyXML.label "Αντιγραφή XML">
+  <!ENTITY cmdBlink.label "Αναβόσβημα στοιχείου">
+  <!ENTITY cmdInspectBrowser.label "Επιθεώρηση συμπεριλαμβανόμενου εγγραφου">
+  
+  <!ENTITY cmdShowPseudoClasses.label "Ορισμός Pseudo-classes...">
+  <!ENTITY cmdShowPseudoClasses.accesskey "p">
+  
+  <!ENTITY pseudoClasses.title "Pseudo-classes">
+
+  <!ENTITY findNodes.title "Εύρεση Nodes">
+  <!ENTITY findNodesById.label "Id">
+  <!ENTITY findNodesByTag.label "Tag">
+  <!ENTITY findNodesByAttr.label "Γνωρ">
+  <!ENTITY findNodesByAttrValue.label "Τιμή">
+  <!ENTITY findNodesSearchBy.label "Αναζήτηση με">
+  <!ENTITY findNodesDirection.label "Κατεύθυνση">
+  <!ENTITY findNodesDirectionUp.label "Πάνω">
+  <!ENTITY findNodesDirectionDown.label "Κάτω">
+  <!ENTITY findNodesFind.label "Εύρεση">
+  <!ENTITY findNodesCancel.label "Ακύρωση">

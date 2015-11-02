@@ -1,0 +1,226 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DEPTH		= @DEPTH@
+topsrcdir	= @top_srcdir@
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+include $(DEPTH)/config/autoconf.mk
+
+MODULE		= libpurple
+EXPORTS_NAMESPACES= libpurple
+LIBRARY_NAME	= purple
+FORCE_STATIC_LIB= 1
+LIB_IS_C_ONLY	= 1
+#NO_DIST_INSTALL	= 1
+
+VISIBILITY_FLAGS=
+
+ifeq (,$(filter WINNT Darwin,$(OS_ARCH)))
+LOCAL_INCLUDES	= $(GLIB_CFLAGS) $(LIBXML2_CFLAGS)
+else
+LOCAL_INCLUDES  = -I$(DIST)/include/glib
+SHARED_LIBRARY_LIBS += $(foreach lib,glib xml2,../libraries/$(lib)/$(LIB_PREFIX)$(lib).$(LIB_SUFFIX))
+
+ifeq ($(OS_ARCH),WINNT)
+LOCAL_INCLUDES += -I$(srcdir)/win32
+DEFINES += -DGLIB_STATIC_COMPILATION
+endif
+endif
+
+ifndef PURPLE_PLUGINS
+STATIC_PROTO_libs = $(foreach proto,$(STATIC_PRPLS),protocols/$(proto)_libs)
+
+ifneq (,$(STATIC_PRPLS))
+STATIC_PRPL_LIBS = $(foreach proto,$(STATIC_PRPLS),protocols/$(proto)/$(LIB_PREFIX)$(proto).$(LIB_SUFFIX))
+SHARED_LIBRARY_LIBS += $(STATIC_PRPL_LIBS)
+DEFINES += -DSTATIC_PROTO_INIT='extern void static_proto_init(void);'
+endif
+else
+libdir = /usr/lib
+DEFINES		+= -DPURPLE_PLUGINS -DLIBDIR=\"$(libdir)/purple-$(PURPLE_MAJOR_VERSION)/\"
+endif
+
+PURPLE_VERSION	= $(PURPLE_MAJOR_VERSION).$(PURPLE_MINOR_VERSION).$(PURPLE_MICRO_VERSION)
+DEFINES		+= -DHAVE_CONFIG_H -DPACKAGE=\"purple\" -DVERSION=\"$(PURPLE_VERSION)\"
+
+PREF_JS_EXPORTS = $(srcdir)/purple-prefs.js
+
+EXPORTS_libpurple = \
+		account.h \
+		accountopt.h \
+		blist.h \
+		buddyicon.h \
+		cipher.h \
+		circbuffer.h \
+		cmds.h \
+		config.h \
+		connection.h \
+		conversation.h \
+		core.h \
+		dbus-maybe.h \
+		debug.h \
+		eventloop.h \
+		ft.h \
+		gettext.h \
+		idle.h \
+		imgstore.h \
+		log.h \
+		mime.h \
+		nat-pmp.h \
+		network.h \
+		notify.h \
+		ntlm.h \
+		plugin.h \
+		pluginpref.h \
+		prefs.h \
+		privacy.h \
+		proxy.h \
+		prpl.h \
+		request.h \
+		roomlist.h \
+		server.h \
+		signals.h \
+		dnsquery.h \
+		dnssrv.h \
+		smiley.h \
+		status.h \
+		stringref.h \
+		stun.h \
+		sslconn.h \
+		upnp.h \
+		util.h \
+		value.h \
+		xmlnode.h \
+		whiteboard.h \
+		internal.h \
+		version.h \
+		$(NULL)
+#		certificate.h
+
+ifeq ($(OS_ARCH),WINNT)
+EXPORTS_libpurple += \
+		win32/win32dep.h \
+		win32/wpurpleerror.h \
+		win32/libc_interface.h \
+		win32/libc_internal.h \
+		$(NULL)
+endif
+
+CSRCS		= \
+		account.c \
+		accountopt.c \
+		blist.c \
+		buddyicon.c \
+		cipher.c \
+		ciphers/des.c \
+		ciphers/gchecksum.c \
+		ciphers/hmac.c \
+		ciphers/md4.c \
+		ciphers/md5.c \
+		ciphers/rc4.c \
+		ciphers/sha1.c \
+		ciphers/sha256.c \
+		circbuffer.c \
+		cmds.c \
+		connection.c \
+		conversation.c \
+		core.c \
+		debug.c \
+		eventloop.c \
+		ft.c \
+		gettext.c \
+		idle.c \
+		imgstore.c \
+		mime.c \
+		nat-pmp.c \
+		network.c \
+		ntlm.c \
+		notify.c \
+		plugin.c \
+		pluginpref.c \
+		prefs.c \
+		privacy.c \
+		proxy.c \
+		prpl.c \
+		request.c \
+		roomlist.c \
+		server.c \
+		signals.c \
+		dnsquery.c \
+		dnssrv.c \
+		smiley.c \
+		status.c \
+		stringref.c \
+		stun.c \
+		sslconn.c \
+		upnp.c \
+		util.c \
+		value.c \
+		version.c \
+		xmlnode.c \
+		whiteboard.c \
+		ssl-nss.c \
+		$(NULL)
+
+ifndef PURPLE_PLUGINS
+ifneq (,$(STATIC_PRPLS))
+CSRCS		+= static_proto_init.c
+GARBAGE		+= static_proto_init.c
+endif
+endif
+
+ifeq ($(OS_ARCH),WINNT)
+CSRCS		+= \
+		win32/libc_interface.c \
+		win32/win32dep.c \
+		$(NULL)
+endif
+
+include $(topsrcdir)/config/rules.mk
+
+ifeq ($(OS_ARCH),WINNT)
+export::
+	mkdir -p win32
+endif
+
+export::
+	mkdir -p ciphers
+
+ifneq (,$(STATIC_PRPLS))
+$(STATIC_PRPL_LIBS):: $(STATIC_PROTO_libs)
+
+static_proto_init.c: $(GLOBAL_DEPS)
+	echo >  $@ '#include <glib.h>'
+	echo >> $@ '$(foreach proto,$(STATIC_PRPLS),extern gboolean purple_init_$(proto)_plugin();)'
+	echo >> $@ 'void static_proto_init(void) {'
+	echo >> $@ '$(foreach proto,$(STATIC_PRPLS),purple_init_$(proto)_plugin();)'
+	echo >> $@ '}'
+endif
+
+DYNAMIC_PRPLS = $(foreach proto,$(filter-out $(foreach proto,$(STATIC_PRPLS),protocols/$(proto)),$(PARALLEL_DIRS)),$(proto))
+
+# the dynamic protocols are built after purplexpcom is linked
+dynamic-prpls:
+	$(foreach proto,$(DYNAMIC_PRPLS),$(call SUBMAKE,PURPLEXPCOM=1 libs,$(proto)))
+
+ifeq ($(OS_ARCH),WINNT)
+purple.def: ../libraries/glib/glib.def $(EXPORTS_libpurple) $(GLOBAL_DEPS)
+	cat ../libraries/glib/glib.def > purple.def
+	(cd $(srcdir); cat $(EXPORTS_libpurple)) |egrep '^[a-zA-Z].* \*?w?purple_[a-z_0-9]+\(' |sed -e 's/(.*//' -e 's/.* \*\?//' |sort |uniq >> purple.def
+	(cd $(srcdir); cat $(EXPORTS_libpurple)) |egrep '^w?purple_[a-z_0-9]+ ?\(' |sed -e 's/(.*//' |sort |uniq >> purple.def
+	cat $(srcdir)/server.h |egrep '^[a-zA-Z].* \*?serv_[a-z_0-9]+\(' |sed -e 's/(.*//' -e 's/.* \*\?//' |sort |uniq >> purple.def
+	cat $(srcdir)/signals.h |egrep 'void purple_marshal_[A-Z_]+\(' |sed -e 's/(.*//' -e 's/.* \*\?//' |sort |uniq >> purple.def
+	cat $(srcdir)/xmlnode.h |egrep '^[a-zA-Z].* \*?xmlnode_[a-z_]+\(' |sed -e 's/(.*//' -e 's/.* \*\?//' |sort |uniq >> purple.def
+
+$(LIBRARY): purple.def
+
+GARBAGE += purple.def
+endif
+
+version.h: version.h.in $(GLOBAL_DEPS)
+	sed 's/@''PURPLE_MAJOR_VERSION@/$(PURPLE_MAJOR_VERSION)/;s/@''PURPLE_MINOR_VERSION@/$(PURPLE_MINOR_VERSION)/;s/@''PURPLE_MICRO_VERSION@/$(PURPLE_MICRO_VERSION)/' $< > $@
+
+GARBAGE += version.h

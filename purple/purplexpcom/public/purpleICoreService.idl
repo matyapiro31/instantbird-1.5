@@ -1,0 +1,29 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsISimpleEnumerator.idl"
+#include "purpleIProxy.idl"
+
+/*
+ * This service is used to initialize the libpurple core.
+ */
+[scriptable, uuid(b82583f1-307b-4034-b5c7-9f727fab7d8c)]
+interface purpleICoreService: nsISupports {
+  void init();
+  void quit();
+  readonly attribute AUTF8String version;
+
+  /* Create a new proxy and store it in the preferences */
+  purpleIProxy createProxy(in short aType, in AUTF8String aHost, in unsigned long aPort,
+                           in AUTF8String aUsername, in AUTF8String aPassword);
+
+  /* returns an enumerator on a purpleIProxy array */
+  nsISimpleEnumerator getProxies();
+
+  /* type of the global proxy used for connecting all accounts that
+     don't have specific proxy settings.
+  */
+  attribute purpleIProxyInfo globalProxy;
+};

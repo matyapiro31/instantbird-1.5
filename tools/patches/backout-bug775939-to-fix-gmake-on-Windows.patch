@@ -1,0 +1,59 @@
+diff --git a/media/webrtc/trunk/tools/gyp/pylib/gyp/generator/mozmake.py b/media/webrtc/trunk/tools/gyp/pylib/gyp/generator/mozmake.py
+--- a/media/webrtc/trunk/tools/gyp/pylib/gyp/generator/mozmake.py
++++ b/media/webrtc/trunk/tools/gyp/pylib/gyp/generator/mozmake.py
+@@ -369,20 +369,24 @@ class MakefileGenerator(object):
+       data['LIBRARY_NAME'] = striplib(spec['target_name'])
+       data['FORCE_STATIC_LIB'] = 1
+     elif spec['type'] in ('loadable_module', 'shared_library'):
+       data['LIBRARY_NAME'] = striplib(spec['target_name'])
+       data['FORCE_SHARED_LIB'] = 1
+     else:
+       # Maybe nothing?
+       return False
+-    WriteMakefile(output_file, data, build_file, depth, self.topsrcdir,
++    if self.flavor == 'win':
++      top = self.relative_topsrcdir
++    else:
++      top = self.topsrcdir
++    WriteMakefile(output_file, data, build_file, depth, top,
+                   # we set srcdir up one directory, since the subdir
+                   # doesn't actually exist in the source directory
+-                  swapslashes(os.path.normpath(os.path.join(self.topsrcdir, self.relative_srcdir, os.path.split(rel_path)[0]))),
++                  swapslashes(os.path.normpath(os.path.join(top, self.relative_srcdir, os.path.split(rel_path)[0]))),
+                   self.relative_srcdir,
+                   self.common_mk_path)
+     return True
+ 
+ def GenerateOutput(target_list, target_dicts, data, params):
+   options = params['options']
+   flavor = GetFlavor(params)
+   generator_flags = params.get('generator_flags', {})
+@@ -428,20 +432,26 @@ def GenerateOutput(target_list, target_d
+ 
+   generator = MakefileGenerator(target_dicts, data, options, depth, topsrcdir, relative_topsrcdir, relative_srcdir, output_dir, flavor, common_mk_path)
+   generator.ProcessTargets(needed_targets)
+ 
+   # Write the top-level makefile, which simply calls the other makefiles
+   topdata = {'DIRS': generator.dirs}
+   if generator.parallel_dirs:
+     topdata['PARALLEL_DIRS'] = generator.parallel_dirs
++  if flavor == 'win':
++    top = relative_topsrcdir
++    src = srcdir
++  else:
++    top = topsrcdir
++    src = abs_srcdir
+   WriteMakefile(makefile_path, topdata, params['build_files'][0],
+                 depth,
+-                swapslashes(topsrcdir),
+-                swapslashes(abs_srcdir),
++                swapslashes(top),
++                swapslashes(src),
+                 swapslashes(relative_srcdir),
+                 common_mk_path)
+   scriptname = "$(topsrcdir)/media/webrtc/trunk/tools/gyp/pylib/gyp/generator/mozmake.py"
+   # Reassemble a commandline from parts so that all the paths are correct
+   # NOTE: this MUST match the commandline generated in configure.in!
+   # since we don't see --include statements, duplicate them in FORCE_INCLUDE_FILE lines
+   # Being in a define, they also get used by the common.mk invocation of gyp so they
+   # they don't disappear in the second round of tail-swallowing

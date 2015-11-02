@@ -1,0 +1,25 @@
+diff --git a/accessible/src/base/nsAccessibilityService.cpp b/accessible/src/base/nsAccessibilityService.cpp
+--- a/accessible/src/base/nsAccessibilityService.cpp
++++ b/accessible/src/base/nsAccessibilityService.cpp
+@@ -76,16 +76,21 @@
+ #include "XULFormControlAccessible.h"
+ #include "XULListboxAccessibleWrap.h"
+ #include "XULMenuAccessibleWrap.h"
+ #include "XULSliderAccessible.h"
+ #include "XULTabAccessible.h"
+ #include "XULTreeGridAccessibleWrap.h"
+ #endif
+ 
++/* See bug 762930 */
++#ifdef GROUPING
++# undef GROUPING
++#endif
++
+ using namespace mozilla;
+ using namespace mozilla::a11y;
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+ // Statics
+ ////////////////////////////////////////////////////////////////////////////////
+ 
+ /**

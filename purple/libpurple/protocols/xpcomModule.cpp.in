@@ -1,0 +1,81 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "mozilla/ModuleUtils.h"
+#include "nsICategoryManager.h"
+#include "nsServiceManagerUtils.h"
+
+#include "purpleIPlugin.h"
+#include "value.h"
+
+#include "xpcomCid.h"
+#define PURPLE_PROTOCOL_PLUGIN_CATEGORY    "purple-protocol-plugin"
+#define PURPLE_PROTOCOL_PLUGIN_ENTRY_VALUE "@PROTOCOL@ protocol"
+#define PURPLE_PROTOCOL_PLUGIN_CONTRACTID  "@instantbird.org/prpl-@PROTOCOL@;1"
+
+#define IM_PROTOCOL_PLUGIN_CATEGORY    "im-protocol-plugin"
+#define IM_PROTOCOL_PLUGIN_ENTRY_VALUE "@instantbird.org/purple/protocol;1"
+#define IM_PROTOCOL_PLUGIN_CONTRACTID  "prpl-@PROTOCOL@"
+
+extern "C" {
+  gboolean purple_plugin_register_self();
+}
+
+class @PROTOCOL@: public purpleIPlugin {
+public:
+  @PROTOCOL@();
+  virtual ~@PROTOCOL@();
+
+  NS_DECL_ISUPPORTS
+  NS_DECL_PURPLEIPLUGIN
+};
+
+@PROTOCOL@::@PROTOCOL@()
+{
+}
+@PROTOCOL@::~@PROTOCOL@()
+{
+}
+
+NS_IMETHODIMP @PROTOCOL@::RegisterSelf()
+{
+  purple_plugin_register_self();
+
+  return NS_OK;
+}
+
+NS_IMPL_ISUPPORTS1(@PROTOCOL@, purpleIPlugin)
+
+NS_GENERIC_FACTORY_CONSTRUCTOR(@PROTOCOL@)
+
+NS_DEFINE_NAMED_CID(PRPL_CID);
+
+static const mozilla::Module::CIDEntry kCIDs[] = {
+  { &kPRPL_CID, false, NULL, @PROTOCOL@Constructor },
+  { NULL }
+};
+
+static const mozilla::Module::ContractIDEntry kContracts[] = {
+  { PURPLE_PROTOCOL_PLUGIN_CONTRACTID, &kPRPL_CID },
+  { NULL }
+};
+
+static const mozilla::Module::CategoryEntry kCategories[] = {
+  { PURPLE_PROTOCOL_PLUGIN_CATEGORY,
+    PURPLE_PROTOCOL_PLUGIN_CONTRACTID,
+    PURPLE_PROTOCOL_PLUGIN_ENTRY_VALUE },
+  { IM_PROTOCOL_PLUGIN_CATEGORY,
+    IM_PROTOCOL_PLUGIN_CONTRACTID,
+    IM_PROTOCOL_PLUGIN_ENTRY_VALUE },
+  { NULL }
+};
+
+static const mozilla::Module kModule = {
+  mozilla::Module::kVersion,
+  kCIDs,
+  kContracts,
+  kCategories
+};
+
+NSMODULE_DEFN(@PROTOCOL@PrplModule) = &kModule;

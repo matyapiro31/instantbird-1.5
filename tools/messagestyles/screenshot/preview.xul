@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://instantbird/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://instantbird/content/instantbird.css" type="text/css"?>
+
+<!DOCTYPE window>
+
+<window
+  id     = "convWindow"
+  windowtype="Messenger:previewConvs"
+  title  = "Screenshot of message themes"
+  width  = "450"
+  height = "500"
+  xmlns  = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml">
+
+  <script type="application/javascript" src="chrome://screenshot/content/preview.js"/>
+
+  <browser flex="1" id="browser" type="content-conversation"/>
+  <html:canvas style="display: none" id="canvas"></html:canvas>
+</window>

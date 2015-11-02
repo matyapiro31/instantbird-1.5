@@ -1,0 +1,124 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DEPTH		= @DEPTH@
+topsrcdir	= @top_srcdir@
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+# relativesrcdir is needed for xpcshell_tests.
+relativesrcdir = @relativesrcdir@
+
+include $(DEPTH)/config/autoconf.mk
+
+MODULE		= purplexpcom
+LIBRARY_NAME	= purplexpcom
+#EXPORT_LIBRARY	= 1
+IS_COMPONENT	= 1
+FORCE_SHARED_LIB = 1
+MODULE_NAME	= purplexpcom
+#NO_DIST_INSTALL	= 1
+
+SHARED_LIBRARY_LIBS += ../../libpurple/$(LIB_PREFIX)purple.$(LIB_SUFFIX)
+
+ifeq (,$(filter WINNT Darwin,$(OS_ARCH)))
+LOCAL_INCLUDES	= $(GLIB_CFLAGS)
+EXTRA_LIBS	= $(GLIB_LIBS) $(GLIB_GMODULE_LIBS) -lz $(LIBXML2_LIBS)
+else
+LOCAL_INCLUDES  += -I$(DIST)/include/glib
+ifneq ($(OS_ARCH),WINNT)
+EXTRA_LIBS	= -lz -liconv
+else
+DEFINES += -DGLIB_STATIC_COMPILATION
+EXTRA_LIBS	= ws2_32.lib
+
+ifdef PURPLE_BONJOUR
+EXTRA_LIBS	+= netapi32.lib
+endif
+
+DSO_LDOPTS	+= -DEF:../../libpurple/purple.def
+endif
+endif
+
+EXTRA_LIBS	+= $(NSS_LIBS) $(NSPR_LIBS)
+
+ifeq (,$(filter WINNT FreeBSD,$(OS_ARCH)))
+EXTRA_LIBS	+= -lresolv
+endif
+
+CPPSRCS		= \
+		purpleAccount.cpp \
+		purpleAccountBuddy.cpp \
+		purpleAccountScoper.cpp \
+		purpleConversation.cpp \
+		purpleConvIM.cpp \
+		purpleConvChat.cpp \
+		purpleConvChatBuddy.cpp \
+		purpleCoreService.cpp \
+		purpleDebug.cpp \
+		purpleDNS.cpp \
+		purpleInit.cpp \
+		purpleInitAccounts.cpp \
+		purpleInitCommands.cpp \
+		purpleInitContacts.cpp \
+		purpleInitConv.cpp \
+		purpleGetText.cpp \
+		purpleGListEnumerator.cpp \
+		purpleMessage.cpp \
+		purpleModule.cpp \
+		purpleNetwork.cpp \
+		purplePref.cpp \
+		purpleProtocol.cpp \
+		purpleProxy.cpp \
+		purpleProxyInfo.cpp \
+		purpleSockets.cpp \
+		purpleTimer.cpp \
+		purpleTooltipInfo.cpp \
+		$(NULL)
+
+ifneq (,$(filter WINNT Darwin,$(OS_ARCH)))
+CPPSRCS		+= purpleMemory.cpp
+endif
+
+ifdef PURPLE_PLUGINS
+DEFINES 	+= -DPURPLE_PLUGINS
+endif
+
+EXTRA_COMPONENTS = prpl.manifest
+
+ifdef ENABLE_TESTS
+XPCSHELL_TESTS = test
+endif
+
+include $(topsrcdir)/config/rules.mk
+
+ifeq ($(OS_ARCH),Darwin)
+EXTRA_DSO_LDOPTS = -dynamiclib -install_name @executable_path/components/$(SHARED_LIBRARY)
+else ifeq ($(OS_ARCH),WINNT)
+DELETE_AFTER_LINK =
+else
+# Export more than just the NSModule symbol
+MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS =
+endif
+EXTRA_DSO_LDOPTS += $(XPCOM_GLUE_LDOPTS) $(MOZ_COMPONENT_NSPR_LIBS)
+
+ifeq ($(OS_ARCH),WINNT)
+CXXFLAGS	+= -wd4624 -wd4068
+
+module.ver: module.ver.in $(GLOBAL_DEPS)
+	sed 's/@''PURPLE_MAJOR_VERSION@/$(PURPLE_MAJOR_VERSION)/;s/@''PURPLE_MINOR_VERSION@/$(PURPLE_MINOR_VERSION)/;s/@''PURPLE_MICRO_VERSION@/$(PURPLE_MICRO_VERSION)/' $< > $@
+
+_RC_STRING += -SRCDIR .
+module.rc: module.ver
+
+GARBAGE += module.ver
+endif
+
+libs:: $(SHARED_LIBRARY)
+ifeq ($(OS_ARCH),WINNT)
+	-mv fake.lib $(LIBRARY_NAME).$(LIB_SUFFIX)
+endif
+	$(call SUBMAKE,dynamic-prpls,../../libpurple)
+
+#libs:: $(SHARED_LIBRARY)
+#	$(INSTALL) $(IFLAGS2) $(SHARED_LIBRARY) $(FINAL_TARGET)/libraries

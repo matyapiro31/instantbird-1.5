@@ -1,0 +1,24 @@
+diff --git a/toolkit/crashreporter/tools/symbolstore.py b/toolkit/crashreporter/tools/symbolstore.py
+--- a/toolkit/crashreporter/tools/symbolstore.py
++++ b/toolkit/crashreporter/tools/symbolstore.py
+@@ -131,16 +131,20 @@ class HGRepoInfo:
+         hg_root = os.environ.get("SRCSRV_ROOT")
+         if hg_root:
+             root = hg_root
+         else:
+             root = read_output('hg', '-R', path,
+                                'showconfig', 'paths.default')
+             if not root:
+                 print >> sys.stderr, "Failed to get HG Repo for %s" % path
++        if os.path.exists(root):
++            root = read_output('hg', '-R', root,
++                               'showconfig', 'paths.default')
++
+         cleanroot = None
+         if root:
+             match = rootRegex.match(root)
+             if match:
+                 cleanroot = match.group(1)
+                 if cleanroot.endswith('/'):
+                     cleanroot = cleanroot[:-1]
+         if cleanroot is None:
